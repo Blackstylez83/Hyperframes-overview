@@ -48,7 +48,7 @@ def cut(n, pieces, total):
     fg = ";".join(parts) + f";{cat}concat=n={len(pieces)}:v=1:a=0,tpad=stop_mode=clone:stop_duration=30[v]"
     out = f"assets/cut/s{n:02d}.mp4"
     subprocess.check_call(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", fg, "-map", "[v]",
-                           "-t", str(total), "-c:v", "libx264", "-preset", "medium", "-crf", "19",
+                           "-t", str(total), "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-g", "30", "-keyint_min", "30",
                            "-pix_fmt", "yuv420p", "-movflags", "+faststart", out])
     return out
 
