@@ -5,50 +5,493 @@
     <meta name="viewport" content="width=1080, height=1920" />
     <script src="node_modules/gsap/dist/gsap.min.js"></script>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+      :root {
+        --blue: #00cae0;
+        --black: #000000;
+        --white: #ffffff;
+        --laser: linear-gradient(100deg, #e4b8f7 0%, #b4c4f6 45%, #19ecff 100%);
+        --bright: linear-gradient(150deg, #ffffff 0%, #8ae9f3 35%, #00cae0 62%, #2f6bff 100%);
       }
-      html,
-      body {
-        margin: 0;
-        width: 1080px;
-        height: 1920px;
-        overflow: hidden;
-        background: #000;
-      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--black); }
+      body { font-family: "Outfit", sans-serif; color: var(--white); }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--black); }
+
+      /* ---------- background ---------- */
+      #bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+      .blob { position: absolute; border-radius: 50%; }
+      #blob1 { width: 1100px; height: 1100px; left: -380px; top: 260px;
+        background: radial-gradient(circle, rgba(0, 202, 224, 0.34) 0%, rgba(0, 202, 224, 0) 64%); }
+      #blob2 { width: 1000px; height: 1000px; right: -420px; top: 1050px;
+        background: radial-gradient(circle, rgba(47, 107, 255, 0.26) 0%, rgba(47, 107, 255, 0) 64%); }
+      #blob3 { width: 760px; height: 760px; right: -240px; top: -260px;
+        background: radial-gradient(circle, rgba(228, 184, 247, 0.16) 0%, rgba(228, 184, 247, 0) 64%); }
+      #grid { position: absolute; left: -60px; top: -60px; width: 1200px; height: 2100px;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.16) 2px, rgba(255, 255, 255, 0) 2.6px);
+        background-size: 48px 48px; }
+      .bignum { position: absolute; right: -30px; top: 40px; font-size: 520px; font-weight: 900; line-height: 1;
+        letter-spacing: -20px; color: rgba(0, 0, 0, 0); -webkit-text-stroke: 3px rgba(0, 202, 224, 0.26); opacity: 0; }
+      .mark { position: absolute; width: 34px; height: 34px; }
+      .mark::before, .mark::after { content: ""; position: absolute; background: rgba(255, 255, 255, 0.5); }
+      .mark::before { left: 16px; top: 0; width: 2px; height: 34px; }
+      .mark::after { top: 16px; left: 0; height: 2px; width: 34px; }
+      #ring1 { position: absolute; width: 1400px; height: 1400px; left: -160px; top: 300px; border-radius: 50%;
+        border: 2px solid rgba(0, 202, 224, 0.18); }
+      #ring2 { position: absolute; width: 1700px; height: 1700px; left: -310px; top: 150px; border-radius: 50%;
+        border: 2px dashed rgba(255, 255, 255, 0.1); }
+
+      /* ---------- camera card ---------- */
+      #stage { position: absolute; left: 40px; top: 500px; width: 1000px; height: 1000px; z-index: 5; perspective: 2000px; }
+      #card { position: absolute; inset: 0; border-radius: 44px; overflow: hidden; background: #000;
+        border: 3px solid rgba(0, 202, 224, 0.7);
+        box-shadow: 0 0 80px rgba(0, 202, 224, 0.28), 0 50px 120px rgba(0, 0, 0, 0.9); transform-style: preserve-3d; }
+      #vw { position: absolute; left: 0; top: 0; width: 2010px; height: 1080px; transform-origin: 0 0; }
+      #vw video, #vw img.full { position: absolute; left: 0; top: 0; width: 2010px; height: 1080px; }
+      #afterwrap { position: absolute; left: 0; top: 0; width: 2010px; height: 1080px; clip-path: inset(0 0 0 100%); }
+      #before { opacity: 0; }
+      #divider { position: absolute; top: 0; width: 6px; height: 1080px; left: 2010px; background: var(--white);
+        box-shadow: 0 0 30px var(--blue); opacity: 0; }
+      #spot { position: absolute; left: 0; top: 0; width: 100px; height: 60px; border-radius: 14px;
+        border: 4px solid var(--blue); box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.55), 0 0 24px rgba(0, 202, 224, 0.9);
+        opacity: 0; }
+      .rip { position: absolute; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%;
+        border: 6px solid var(--blue); background: rgba(0, 202, 224, 0.25); opacity: 0; }
+      #gloss { position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(120% 60% at 20% 0%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 55%); }
+      #flash { position: absolute; inset: 0; background: var(--white); opacity: 0; }
+      #chrome { position: absolute; left: 0; top: 0; right: 0; height: 64px; background: rgba(0, 0, 0, 0.85);
+        display: flex; align-items: center; gap: 14px; padding-left: 28px; opacity: 0; }
+      #chrome i { width: 18px; height: 18px; border-radius: 50%; background: rgba(255, 255, 255, 0.35); }
+      #chrome i:first-child { background: var(--blue); }
+
+      /* ---------- scene overlays ---------- */
+      .scene { position: absolute; inset: 0; z-index: 10; opacity: 0; }
+      .pill { position: absolute; left: 60px; top: 92px; display: flex; align-items: center; gap: 14px;
+        padding: 12px 26px 12px 18px; border-radius: 40px; border: 2px solid rgba(0, 202, 224, 0.8);
+        background: rgba(0, 202, 224, 0.12); font-size: 28px; font-weight: 700; letter-spacing: 4px; }
+      .pill .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 16px var(--blue); }
+      .head { position: absolute; left: 56px; top: 170px; width: 970px; }
+      .hl { overflow: hidden; padding-bottom: 6px; }
+      .w { display: inline-block; font-size: 124px; font-weight: 900; line-height: 1.0; letter-spacing: -3px; }
+      .w.c { color: var(--blue); }
+      .w.laser { background: var(--laser); -webkit-background-clip: text; background-clip: text; color: rgba(0, 0, 0, 0); }
+      .band { position: absolute; left: 50px; right: 50px; top: 1548px; height: 220px; display: flex;
+        align-items: center; justify-content: center; }
+      .phrase { position: absolute; left: 0; right: 0; text-align: center; font-size: 60px; font-weight: 700;
+        line-height: 1.15; opacity: 0; }
+      .phrase b { color: var(--blue); font-weight: 900; }
+
+      .crumbs { position: absolute; left: 56px; top: 432px; display: flex; gap: 12px; }
+      .crumb { padding: 6px 18px; border-radius: 30px; font-size: 26px; font-weight: 700;
+        border: 2px solid rgba(255, 255, 255, 0.35); color: rgba(255, 255, 255, 0.75); background: rgba(0, 0, 0, 0.5); }
+
+      .assets { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; perspective: 1600px; }
+      .acard { position: absolute; top: 560px; width: 188px; height: 250px; border-radius: 24px; overflow: hidden;
+        background: #000; border: 3px solid var(--white); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 202, 224, 0.35); }
+      .acard img { width: 100%; height: 100%; object-fit: cover; }
+      .acard span { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 0; text-align: center;
+        font-size: 22px; font-weight: 800; letter-spacing: 3px; background: var(--blue); color: var(--black); }
+      #s3-a0 { left: 40px; } #s3-a1 { left: 243px; } #s3-a2 { left: 446px; } #s3-a3 { left: 649px; } #s3-a4 { left: 852px; }
+      .acard.audio { background: var(--bright); }
+      .wave { position: absolute; left: 22px; right: 22px; top: 40px; height: 140px; display: flex; align-items: center; gap: 8px; }
+      .wave i { flex: 1; border-radius: 6px; background: var(--black); }
+      .limits { position: absolute; left: 60px; right: 60px; top: 1330px; display: flex; gap: 20px; }
+      .limits div { flex: 1; text-align: center; padding: 18px 0 20px; border-radius: 28px; background: rgba(0, 0, 0, 0.82);
+        border: 3px solid var(--blue); font-size: 28px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+      .limits b { display: block; font-size: 88px; line-height: 1; color: var(--blue); letter-spacing: 0; }
+
+      .glass { position: absolute; left: 70px; right: 70px; top: 1150px; padding: 30px 36px 30px; border-radius: 32px;
+        background: rgba(0, 0, 0, 0.84); border: 3px solid rgba(255, 255, 255, 0.55);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 202, 224, 0.3); }
+      .glab { font-size: 22px; font-weight: 800; letter-spacing: 5px; color: var(--blue); margin-bottom: 12px; }
+      .tw { display: block; font-size: 34px; font-weight: 500; line-height: 1.35; white-space: nowrap; clip-path: inset(0 100% 0 0); }
+      .tw.big { font-size: 46px; font-weight: 700; }
+      .tags { display: flex; gap: 14px; margin-top: 18px; }
+      .tags span { padding: 8px 22px; border-radius: 30px; background: var(--blue); color: var(--black);
+        font-size: 24px; font-weight: 800; letter-spacing: 3px; }
+
+      .model { position: absolute; left: 60px; top: 448px; font-size: 30px; font-weight: 800; letter-spacing: 6px;
+        padding: 6px 20px; border-radius: 12px; background: var(--laser); color: var(--black); }
+      .specs { position: absolute; left: 60px; right: 60px; top: 1300px; display: flex; gap: 20px; perspective: 1400px; }
+      .spec { flex: 1; height: 170px; border-radius: 30px; background: rgba(0, 0, 0, 0.86); border: 3px solid var(--blue);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        box-shadow: 0 0 40px rgba(0, 202, 224, 0.35); }
+      .spec small { font-size: 22px; font-weight: 700; letter-spacing: 4px; color: rgba(255, 255, 255, 0.85); }
+      .spec b { font-size: 72px; font-weight: 900; color: var(--blue); line-height: 1.05; }
+      .specs.bf .spec { height: 120px; background: var(--laser); border: none; }
+      .specs.bf .spec b { font-size: 38px; color: var(--black); }
+
+      .credits { position: absolute; right: 70px; top: 1300px; padding: 18px 34px; border-radius: 28px;
+        background: rgba(0, 0, 0, 0.88); border: 3px solid var(--blue); text-align: right; }
+      .credits small { display: block; font-size: 22px; letter-spacing: 5px; font-weight: 700; }
+      .credits b { font-size: 84px; font-weight: 900; color: var(--blue); font-variant-numeric: tabular-nums; line-height: 1; }
+      .loader { position: absolute; left: 70px; top: 1300px; width: 300px; height: 150px; border-radius: 28px;
+        background: rgba(0, 0, 0, 0.88); border: 3px solid rgba(255, 255, 255, 0.5); display: flex; align-items: center; gap: 18px; padding-left: 24px; }
+      .loader svg { width: 90px; height: 90px; }
+      .loader circle { fill: none; stroke: var(--blue); stroke-width: 12; stroke-linecap: round;
+        stroke-dasharray: 314; stroke-dashoffset: 230; transform-origin: 60px 60px; }
+      .loader span { font-size: 24px; font-weight: 800; letter-spacing: 3px; }
+
+      .chips { position: absolute; left: 0; right: 0; top: 1405px; display: flex; justify-content: center; gap: 16px; }
+      .chips span { padding: 10px 26px; border-radius: 30px; background: rgba(0, 0, 0, 0.82); border: 3px solid var(--blue);
+        font-size: 28px; font-weight: 800; letter-spacing: 3px; }
+      .ba-tag { position: absolute; top: 540px; padding: 10px 28px; border-radius: 30px; font-size: 32px; font-weight: 900; letter-spacing: 5px; }
+      .ba-tag.before { left: 80px; background: var(--white); color: var(--black); }
+      .ba-tag.after { right: 80px; background: var(--blue); color: var(--black); }
+      .newb { position: absolute; left: 60px; top: 448px; padding: 6px 24px; border-radius: 12px; overflow: hidden;
+        background: var(--laser); color: var(--black); font-size: 32px; font-weight: 900; letter-spacing: 6px; }
+      .price { position: absolute; left: 60px; right: 60px; top: 1080px; padding: 26px 30px 34px; border-radius: 40px;
+        background: rgba(0, 0, 0, 0.9); border: 3px solid rgba(255, 255, 255, 0.4); text-align: center;
+        box-shadow: 0 0 60px rgba(0, 202, 224, 0.35); }
+      .amt { font-size: 250px; font-weight: 900; line-height: 1; letter-spacing: -8px; background: var(--laser);
+        -webkit-background-clip: text; background-clip: text; color: rgba(0, 0, 0, 0); }
+      .or { font-size: 46px; font-weight: 800; letter-spacing: 2px; margin-top: 4px; }
+      .fine { font-size: 22px; font-weight: 500; color: rgba(255, 255, 255, 0.85); margin-top: 18px; }
+
+      .cta-head { position: absolute; left: 0; right: 0; top: 380px; text-align: center; }
+      .cta-head .w { font-size: 150px; }
+      .bubble { position: absolute; left: 70px; right: 70px; top: 860px; height: 230px; border-radius: 48px;
+        background: rgba(0, 0, 0, 0.88); border: 3px solid var(--blue); display: flex; align-items: center; gap: 30px; padding: 0 36px;
+        box-shadow: 0 0 80px rgba(0, 202, 224, 0.4), 0 40px 100px rgba(0, 0, 0, 0.9); }
+      .av { width: 130px; height: 130px; border-radius: 50%; background: var(--laser); flex: none; }
+      .btxt { flex: 1; }
+      .btxt small { font-size: 28px; color: rgba(255, 255, 255, 0.8); font-weight: 500; }
+      .typed { display: flex; align-items: center; gap: 6px; }
+      .typed .tw { font-size: 96px; font-weight: 900; line-height: 1.1; }
+      .caret { width: 8px; height: 90px; background: var(--blue); }
+      .send { width: 120px; height: 120px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; flex: none; }
+      .send svg, .plane svg { width: 64px; height: 64px; fill: var(--black); }
+      .cta-sub { position: absolute; left: 0; right: 0; top: 1160px; text-align: center; font-size: 60px; font-weight: 700; }
+      .plane { position: absolute; left: 862px; top: 915px; width: 120px; height: 120px; opacity: 0; display: flex; align-items: center; justify-content: center; }
+      .plane svg { fill: var(--blue); width: 96px; height: 96px; }
+
+      .burst { position: absolute; left: 140px; top: 560px; width: 800px; height: 800px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(0, 202, 224, 0.45) 0%, rgba(0, 202, 224, 0) 62%); }
+      .logo { position: absolute; inset: 0; perspective: 1600px; }
+      .lg { position: absolute; display: block; }
+      #s13-glow { filter: blur(26px) drop-shadow(0 0 30px #00cae0); opacity: 0.0; }
+      .badge { overflow: hidden; border-radius: 26px; }
+      .badge img { width: 100%; height: 100%; display: block; }
+      .shine { position: absolute; top: -20px; left: -80px; width: 60px; height: 140%; transform: skewX(-20deg);
+        background: rgba(255, 255, 255, 0.85); filter: blur(6px); }
+
+      /* ---------- HUD ---------- */
+      #hud { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
+      #prog { position: absolute; left: 60px; right: 60px; top: 1812px; height: 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.16); overflow: hidden; }
+      #progfill { width: 100%; height: 100%; background: var(--bright); transform-origin: 0 50%; transform: scaleX(0); }
+      .meta { position: absolute; top: 1846px; font-size: 22px; font-weight: 700; letter-spacing: 4px; color: rgba(255, 255, 255, 0.7); }
+      #meta-l { left: 60px; } #meta-r { right: 60px; }
+
+      /* ---------- transitions ---------- */
+      #wipe { position: absolute; inset: 0; z-index: 50; overflow: hidden; pointer-events: none; }
+      #wipeinner { position: absolute; inset: 0; }
+      .wb { position: absolute; top: -240px; height: 2400px; transform: skewX(-18deg); }
+      #wA { left: 0; width: 3200px; background: var(--blue); }
+      #wB { left: 3200px; width: 140px; background: var(--laser); }
+      #wC { left: -90px; width: 90px; background: var(--white); }
     </style>
   </head>
   <body>
-    <div
-      id="root"
-      data-composition-id="main"
-      data-start="0"
-      data-duration="4.5"
-      data-width="1080"
-      data-height="1920"
-    >
-      
-      
+    <div id="root" data-composition-id="main" data-start="0" data-duration="84.36" data-width="1080" data-height="1920">
+      <div id="bg" class="clip" data-start="0" data-duration="84.36" data-track-index="0" data-layout-ignore>
+        <div class="blob" id="blob1"></div>
+        <div class="blob" id="blob2"></div>
+        <div class="blob" id="blob3"></div>
+        <div id="grid"></div>
+        <div id="ring2"></div>
+        <div id="ring1"></div>
+        <div class="bignum" id="num-01">01</div><div class="bignum" id="num-02">02</div><div class="bignum" id="num-03">03</div><div class="bignum" id="num-04">04</div><div class="bignum" id="num-05">05</div><div class="bignum" id="num-06">06</div><div class="bignum" id="num-BF">BF</div>
+        <div class="mark" style="left: 30px; top: 30px"></div>
+        <div class="mark" style="right: 30px; top: 30px"></div>
+        <div class="mark" style="left: 30px; bottom: 30px"></div>
+        <div class="mark" style="right: 30px; bottom: 30px"></div>
+      </div>
 
-      <div
-        id="instagram-follow"
-        class="clip"
-        data-composition-id="instagram-follow"
-        data-composition-src="compositions/instagram-follow.html"
-        data-start="0"
-        data-duration="4.5"
-        data-track-index="1"
-        data-width="1080"
-        data-height="1920"
-      ></div>
+      <div id="stage" data-layout-allow-overflow>
+        <div id="card">
+          <div id="vw">
+            <video id="v01" data-start="0.0" data-duration="3.9" data-track-index="1" src="assets/cut/s01.mp4" muted playsinline></video><video id="v02" data-start="3.91" data-duration="7.83" data-track-index="1" src="assets/cut/s02.mp4" muted playsinline></video><video id="v03" data-start="11.75" data-duration="7.83" data-track-index="1" src="assets/cut/s03.mp4" muted playsinline></video><video id="v04" data-start="19.59" data-duration="6.7" data-track-index="1" src="assets/cut/s04.mp4" muted playsinline></video><video id="v05" data-start="26.3" data-duration="9.26" data-track-index="1" src="assets/cut/s05.mp4" muted playsinline></video><video id="v06" data-start="35.57" data-duration="5.34" data-track-index="1" src="assets/cut/s06.mp4" muted playsinline></video><video id="v07" data-start="40.92" data-duration="5.74" data-track-index="1" src="assets/cut/s07.mp4" muted playsinline></video><video id="v08" data-start="46.67" data-duration="9.58" data-track-index="1" src="assets/cut/s08.mp4" muted playsinline></video><video id="v10" data-start="61.14" data-duration="7.43" data-track-index="1" src="assets/cut/s10.mp4" muted playsinline></video><video id="v11" data-start="68.58" data-duration="8.64" data-track-index="1" src="assets/cut/s11.mp4" muted playsinline></video>
+            <img id="before" class="full" src="assets/img/before.jpg" alt="" />
+            <div id="afterwrap"><video id="v09" data-start="56.26" data-duration="4.87" data-track-index="1" src="assets/cut/s09.mp4" muted playsinline></video></div>
+            <div id="divider"></div>
+            <div id="spot"></div>
+            <div class="rip" id="r1" style="left: 1045px; top: 122px"></div>
+            <div class="rip" id="r2a" style="left: 50px; top: 175px"></div>
+            <div class="rip" id="r2b" style="left: 48px; top: 242px"></div>
+            <div class="rip" id="r2c" style="left: 313px; top: 109px"></div>
+            <div class="rip" id="r6a" style="left: 578px; top: 682px"></div>
+            <div class="rip" id="r6b" style="left: 1477px; top: 195px"></div>
+            <div class="rip" id="r8" style="left: 1035px; top: 918px"></div>
+          </div>
+          <div id="chrome"><i></i><i></i><i></i></div>
+          <div id="gloss"></div>
+          <div id="flash"></div>
+        </div>
+      </div>
+
+      <div id="sc1" class="clip scene" data-start="0.0" data-duration="3.9" data-track-index="2"><div class="pill" id="s1-pill"><span class="dot"></span>STEP 01 &middot; SETUP</div><div class="head" id="s1-head"><div class="hl"><span class="w" id="s1-l1">OPEN</span></div><div class="hl"><span class="w c" id="s1-l2">CAPCUT</span></div></div><div class="band"><div class="phrase" id="s1-p0">Click <b>Create Project</b></div></div></div><div id="sc2" class="clip scene" data-start="3.91" data-duration="7.83" data-track-index="2"><div class="pill" id="s2-pill"><span class="dot"></span>STEP 01 &middot; SETUP</div><div class="head" id="s2-head"><div class="hl"><span class="w" id="s2-l1">OMNI</span></div><div class="hl"><span class="w c" id="s2-l2">REFERENCE</span></div></div><div class="band"><div class="phrase" id="s2-p0">Media &rsaquo; Generate &rsaquo; <b>AI Video</b></div><div class="phrase" id="s2-p1">Open the <b>Omni Reference</b> tab</div></div><div class="crumbs"><div class="crumb" id="s2-c0">Media</div><div class="crumb" id="s2-c1">Generate</div><div class="crumb" id="s2-c2">AI Video</div><div class="crumb" id="s2-c3">Omni Reference</div></div></div><div id="sc3" class="clip scene" data-start="11.75" data-duration="7.83" data-track-index="2"><div class="pill" id="s3-pill"><span class="dot"></span>STEP 02 &middot; ASSETS</div><div class="head" id="s3-head"><div class="hl"><span class="w" id="s3-l1">DROP IN</span></div><div class="hl"><span class="w c" id="s3-l2">YOUR ASSETS</span></div></div><div class="band"><div class="phrase" id="s3-p0">Product &middot; Model &middot; Outfit &middot; <b>Audio</b></div><div class="phrase" id="s3-p1">Up to <b>30</b> images &middot; <b>10</b> videos &middot; <b>10</b> audio</div></div><div class="assets" id="s3-assets" data-layout-allow-overflow><div class="acard" id="s3-a0"><img src="assets/img/asset-product.jpg" alt=""><span>PRODUCT</span></div><div class="acard" id="s3-a1"><img src="assets/img/asset-model.jpg" alt=""><span>MODEL</span></div><div class="acard" id="s3-a2"><img src="assets/img/asset-outfit.jpg" alt=""><span>OUTFIT</span></div><div class="acard" id="s3-a3"><img src="assets/img/asset-scene.jpg" alt=""><span>SCENE</span></div><div class="acard audio" id="s3-a4"><div class="wave"><i style="height:30px"></i><i style="height:62px"></i><i style="height:44px"></i><i style="height:88px"></i><i style="height:56px"></i><i style="height:96px"></i><i style="height:40px"></i><i style="height:70px"></i><i style="height:34px"></i><i style="height:58px"></i></div><span>AUDIO</span></div></div><div class="limits" id="s3-lim"><div><b>30</b>images</div><div><b>10</b>videos</div><div><b>10</b>audio</div></div></div><div id="sc4" class="clip scene" data-start="19.59" data-duration="6.7" data-track-index="2"><div class="pill" id="s4-pill"><span class="dot"></span>STEP 03 &middot; PROMPT</div><div class="head" id="s4-head"><div class="hl"><span class="w" id="s4-l1">WRITE</span></div><div class="hl"><span class="w c" id="s4-l2">THE PROMPT</span></div></div><div class="band"><div class="phrase" id="s4-p0">Describe the <b>product</b>, <b>mood</b> &amp; <b>style</b></div></div><div class="glass prompt" id="s4-prompt"><div class="glab">PROMPT</div><div class="tw" id="s4-t0">Ultra-photorealistic perfume commercial,</div><div class="tw" id="s4-t1">rose field at golden hour, soft haze,</div><div class="tw" id="s4-t2">glass refraction, shallow depth of field.</div><div class="tags"><span id="s4-g0">PRODUCT</span><span id="s4-g1">MOOD</span><span id="s4-g2">STYLE</span></div></div></div><div id="sc5" class="clip scene" data-start="26.3" data-duration="9.26" data-track-index="2"><div class="pill" id="s5-pill"><span class="dot"></span>STEP 04 &middot; SETTINGS</div><div class="head" id="s5-head"><div class="hl"><span class="w" id="s5-l1">DIAL IN</span></div><div class="hl"><span class="w c" id="s5-l2">SETTINGS</span></div></div><div class="band"><div class="phrase" id="s5-p0"><b>Dreamina Seedance 2.5</b></div><div class="phrase" id="s5-p1">Duration &middot; Resolution &middot; <b>Ratio</b></div></div><div class="model" id="s5-model">SEEDANCE 2.5</div><div class="specs"><div class="spec" id="s5-k0"><small>DURATION</small><b>30s</b></div><div class="spec" id="s5-k1"><small>RESOLUTION</small><b>720p</b></div><div class="spec" id="s5-k2"><small>RATIO</small><b>4:3</b></div></div></div><div id="sc6" class="clip scene" data-start="35.57" data-duration="5.34" data-track-index="2"><div class="pill" id="s6-pill"><span class="dot"></span>STEP 05 &middot; GENERATE</div><div class="head" id="s6-head"><div class="hl"><span class="w" id="s6-l1">HIT</span></div><div class="hl"><span class="w c" id="s6-l2">GENERATE</span></div></div><div class="band"><div class="phrase" id="s6-p0">Hit <b>Generate</b></div><div class="phrase" id="s6-p1">Hover &rarr; click <b>+</b> to add it</div></div><div class="credits" id="s6-cred"><small>CREDITS</small><b id="s6-num">630</b></div><div class="loader" id="s6-load"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" /></svg><span>GENERATING</span></div></div><div id="sc7" class="clip scene" data-start="40.92" data-duration="5.74" data-track-index="2"><div class="pill" id="s7-pill"><span class="dot"></span>STEP 05 &middot; RESULT</div><div class="head" id="s7-head"><div class="hl"><span class="w" id="s7-l1">ONE PROMPT.</span></div><div class="hl"><span class="w c" id="s7-l2">ONE AD.</span></div></div><div class="band"><div class="phrase" id="s7-p0">One prompt. A <b>30-second</b> ad.</div></div><div class="chips" id="s7-chips"><span>30s</span><span>720p</span><span>SEEDANCE 2.5</span></div></div><div id="sc8" class="clip scene" data-start="46.67" data-duration="9.58" data-track-index="2"><div class="pill" id="s8-pill"><span class="dot"></span>STEP 06 &middot; REFINE</div><div class="head" id="s8-head"><div class="hl"><span class="w" id="s8-l1">FIX ANY</span></div><div class="hl"><span class="w c" id="s8-l2">SECTION</span></div></div><div class="band"><div class="phrase" id="s8-p0">Use the clip as a <b>reference</b></div><div class="phrase" id="s8-p1">Add a <b>short prompt</b></div></div><div class="glass revise" id="s8-rev"><div class="glab">NEW PROMPT</div><div class="tw big" id="s8-t0">add more petal flowers around</div><div class="tags"><span id="s8-g0">5s</span><span id="s8-g1">4:3</span><span id="s8-g2">REFERENCE: CLIP</span></div></div></div><div id="sc9" class="clip scene" data-start="56.26" data-duration="4.87" data-track-index="2"><div class="pill" id="s9-pill"><span class="dot"></span>STEP 06 &middot; REFINE</div><div class="head" id="s9-head"><div class="hl"><span class="w" id="s9-l1">BEFORE</span></div><div class="hl"><span class="w c" id="s9-l2">AFTER</span></div></div><div class="band"><div class="phrase" id="s9-p0">A <b>5-second</b> fix</div></div><div class="ba-tag before" id="s9-b">BEFORE</div><div class="ba-tag after" id="s9-a">AFTER</div></div><div id="sc10" class="clip scene" data-start="61.14" data-duration="7.43" data-track-index="2"><div class="pill" id="s10-pill"><span class="dot"></span>BONUS &middot; BLACK FRIDAY</div><div class="head" id="s10-head"><div class="hl"><span class="w" id="s10-l1">BLACK FRIDAY</span></div><div class="hl"><span class="w c" id="s10-l2">STICKERS</span></div></div><div class="band"><div class="phrase" id="s10-p0">Stickers &middot; Effects &middot; <b>Text Templates</b></div><div class="phrase" id="s10-p1">Drag. Drop. <b>Sale-ready.</b></div></div><div class="newb" id="s10-new">NEW</div><div class="specs bf"><div class="spec" id="s10-k0"><b>Stickers</b></div><div class="spec" id="s10-k1"><b>Effects</b></div><div class="spec" id="s10-k2"><b>Text Templates</b></div></div></div><div id="sc11" class="clip scene" data-start="68.58" data-duration="8.64" data-track-index="2"><div class="pill" id="s11-pill"><span class="dot"></span>BONUS &middot; BLACK FRIDAY</div><div class="head" id="s11-head"><div class="hl"><span class="w" id="s11-l1">BLACK FRIDAY</span></div><div class="hl"><span class="w c" id="s11-l2">SALE</span></div></div><div class="band"><div class="phrase" id="s11-p0">CapCut PC <b>Black Friday Sale</b></div><div class="phrase" id="s11-p1">Get started for <b>$3.99</b> or less</div></div><div class="price" id="s11-price"><div class="amt" id="s11-amt">$3.99</div><div class="or" id="s11-or">or less &middot; CapCut PC</div><div class="fine" id="s11-fine">CapCut PC only. Eligible new, expiring &amp; lapsed users. Prices vary by region.</div></div></div><div id="sc12" class="clip scene" data-start="77.23" data-duration="3.52" data-track-index="2"><div class="cta-head"><div class="hl"><span class="w" id="s12-l1">COMMENT</span></div><div class="hl"><span class="w laser" id="s12-l2">&lsquo;CAPCUT&rsquo;</span></div></div><div class="bubble" id="s12-bub"><div class="av"></div><div class="btxt"><small>Add a comment&hellip;</small><div class="typed"><span class="tw" id="s12-type">CapCut</span><i class="caret" id="s12-caret"></i></div></div><div class="send" id="s12-send"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></div></div><div class="cta-sub" id="s12-sub">and I&rsquo;ll send you the link</div><div class="plane" id="s12-plane"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></div></div><div id="sc13" class="clip scene" data-start="80.76" data-duration="3.59" data-track-index="2"><div class="burst" id="s13-burst"></div><div class="logo" id="s13-logo"><img class="lg" id="s13-glow" src="assets/img/logo-glyph-glow.png" style="left:134px;top:838px;width:214px;height:172px" alt=""><img class="lg" id="s13-glyph" src="assets/img/logo-glyph.png" style="left:134px;top:838px;width:214px;height:172px" alt=""><img class="lg" id="s13-word" src="assets/img/logo-wordmark.png" style="left:382px;top:820px;width:413px;height:111px" alt=""><div class="lg badge" id="s13-badge" style="left:800px;top:826px;width:143px;height:84px"><img src="assets/img/logo-badge.png" alt=""><i class="shine" id="s13-shine"></i></div><img class="lg" id="s13-tag" src="assets/img/logo-tagline.png" style="left:382px;top:937px;width:563px;height:90px" alt=""></div></div>
+
+      <div id="hud" class="clip" data-start="0" data-duration="77.23" data-track-index="3">
+        <div id="prog"><div id="progfill"></div></div>
+        <div class="meta" id="meta-l">CAPCUT PC &middot; AI VIDEO</div>
+        <div class="meta" id="meta-r">OMNI REFERENCE</div>
+      </div>
+
+      <div id="wipe" class="clip" data-start="0" data-duration="84.36" data-track-index="4" data-layout-ignore>
+        <div id="wipeinner"><div class="wb" id="wC"></div><div class="wb" id="wA"></div><div class="wb" id="wB"></div></div>
+      </div>
+
+      <audio id="a01" data-start="0.3" data-duration="3.161" data-track-index="10" src="assets/vo/vo01.mp3" data-volume="1"></audio><audio id="a02" data-start="4.06" data-duration="7.236" data-track-index="10" src="assets/vo/vo02.mp3" data-volume="1"></audio><audio id="a03" data-start="11.9" data-duration="7.236" data-track-index="10" src="assets/vo/vo03.mp3" data-volume="1"></audio><audio id="a04" data-start="19.74" data-duration="6.113" data-track-index="10" src="assets/vo/vo04.mp3" data-volume="1"></audio><audio id="a05" data-start="26.45" data-duration="8.673" data-track-index="10" src="assets/vo/vo05.mp3" data-volume="1"></audio><audio id="a06" data-start="35.72" data-duration="4.754" data-track-index="10" src="assets/vo/vo06.mp3" data-volume="1"></audio><audio id="a07" data-start="41.07" data-duration="5.146" data-track-index="10" src="assets/vo/vo07.mp3" data-volume="1"></audio><audio id="a08" data-start="46.82" data-duration="8.986" data-track-index="10" src="assets/vo/vo08.mp3" data-volume="1"></audio><audio id="a09" data-start="56.41" data-duration="4.284" data-track-index="10" src="assets/vo/vo09.mp3" data-volume="1"></audio><audio id="a10" data-start="61.29" data-duration="6.844" data-track-index="10" src="assets/vo/vo10.mp3" data-volume="1"></audio><audio id="a11" data-start="68.73" data-duration="8.046" data-track-index="10" src="assets/vo/vo11.mp3" data-volume="1"></audio><audio id="a12" data-start="77.38" data-duration="2.926" data-track-index="10" src="assets/vo/vo12.mp3" data-volume="1"></audio>
     </div>
 
     <script>
       window.__timelines = window.__timelines || {};
-      const tl = gsap.timeline({ paused: true });
-      // Example: tl.from("#title", { opacity: 0, y: -50, duration: 1 }, 0);
+      var S = [0, 0.0, 3.91, 11.75, 19.59, 26.3, 35.57, 40.92, 46.67, 56.26, 61.14, 68.58, 77.23, 80.76];
+      var D = [0, 3.91, 7.84, 7.84, 6.71, 9.27, 5.35, 5.75, 9.59, 4.88, 7.44, 8.65, 3.53, 3.6];
+      var PH = {"1": [0.7], "2": [0.8, 4.5], "3": [1.0, 4.6], "4": [0.8], "5": [0.6, 3.4], "6": [0.4, 2.6], "7": [0.7], "8": [0.6, 4.0], "9": [0.5], "10": [0.8, 4.3], "11": [0.6, 5.0]};
+      var TOTAL = 84.36;
+      var CW = 1000, CH = 1000;
+      var tl = gsap.timeline({ paused: true });
+      function at(n, t) { return S[n] + t; }
+      function camV(cx, cy, z) { return { x: CW / 2 - cx * z, y: CH / 2 - cy * z, scale: z }; }
+      function camSet(n, t, cx, cy, z) { tl.set("#vw", camV(cx, cy, z), at(n, t)); }
+      function cam(n, t, cx, cy, z, d, e) {
+        var v = camV(cx, cy, z); v.duration = d || 0.9; v.ease = e || "power3.inOut";
+        tl.to("#vw", v, at(n, t));
+      }
+      function spot(n, t, x, y, w, h) {
+        tl.to("#spot", { left: x - 8, top: y - 8, width: w + 16, height: h + 16, opacity: 1, duration: 0.45, ease: "power2.out" }, at(n, t));
+      }
+      function spotOff(n, t) { tl.to("#spot", { opacity: 0, duration: 0.3, ease: "power1.in" }, at(n, t)); }
+      function rip(id, n, t) {
+        tl.fromTo(id, { scale: 0.2, opacity: 1 }, { scale: 2.6, opacity: 0, duration: 0.75, ease: "power2.out", immediateRender: false }, at(n, t));
+      }
+      function tilt(n, t, rx, ry) {
+        tl.fromTo("#card", { rotationX: rx, rotationY: ry, scale: 0.9 },
+          { rotationX: 0, rotationY: 0, scale: 1, duration: 1.0, ease: "power3.inOut", immediateRender: false }, at(n, t));
+      }
+      function flash(n, t) {
+        tl.fromTo("#flash", { opacity: 0.45 }, { opacity: 0, duration: 0.3, ease: "power2.out", immediateRender: false }, at(n, t));
+      }
+      // shared scene entrance: pill + two headline lines + key phrases
+      function enter(n) {
+        tl.from("#s" + n + "-pill", { x: -60, opacity: 0, duration: 0.5, ease: "power3.out" }, at(n, 0.12));
+        tl.from("#s" + n + "-l1", { yPercent: 110, duration: 0.6, ease: "expo.out" }, at(n, 0.18));
+        tl.from("#s" + n + "-l2", { yPercent: 110, duration: 0.65, ease: "back.out(1.6)" }, at(n, 0.3));
+        var p = PH[n] || [];
+        for (var k = 0; k < p.length; k++) {
+          var id = "#s" + n + "-p" + k;
+          tl.fromTo(id, { y: 46, opacity: 0, scale: 0.94 }, { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out", immediateRender: false }, at(n, p[k]));
+          if (k + 1 < p.length) tl.to(id, { opacity: 0, y: -30, duration: 0.2, ease: "power1.in" }, at(n, p[k + 1] - 0.2));
+        }
+      }
+
+      // ---------- background ambience ----------
+      tl.fromTo("#blob1", { x: 0, y: 0 }, { x: 160, y: 120, duration: 9, ease: "sine.inOut", yoyo: true, repeat: Math.floor(TOTAL / 9) - 1 }, 0);
+      tl.fromTo("#blob2", { x: 0, y: 0 }, { x: -140, y: -180, duration: 11, ease: "sine.inOut", yoyo: true, repeat: Math.floor(TOTAL / 11) - 1 }, 0);
+      tl.fromTo("#blob3", { scale: 1 }, { scale: 1.25, duration: 7, ease: "sine.inOut", yoyo: true, repeat: Math.floor(TOTAL / 7) - 1 }, 0);
+      tl.fromTo("#grid", { y: 0 }, { y: 48 * 12, duration: TOTAL, ease: "none" }, 0);
+      tl.fromTo("#ring1", { rotation: 0 }, { rotation: 90, duration: TOTAL, ease: "none" }, 0);
+      tl.fromTo("#ring2", { rotation: 0 }, { rotation: -60, duration: TOTAL, ease: "none" }, 0);
+      tl.fromTo("#progfill", { scaleX: 0 }, { scaleX: 1, duration: S[12], ease: "none" }, 0);
+      var NUMMAP = [null, "01", "01", "02", "03", "04", "05", "05", "06", "06", "BF", "BF"];
+      var prev = null;
+      for (var n = 1; n <= 11; n++) {
+        var id = "#num-" + NUMMAP[n];
+        if (id !== prev) {
+          if (prev) tl.set(prev, { opacity: 0 }, at(n, 0));
+          tl.fromTo(id, { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", immediateRender: false }, at(n, 0));
+          prev = id;
+        }
+      }
+      tl.set(prev, { opacity: 0 }, S[12]);
+
+      // ---------- transitions: diagonal brand wipe covering every cut ----------
+      tl.set("#wipeinner", { x: -4000 }, 0);
+      for (var b = 2; b <= 13; b++) {
+        tl.fromTo("#wipeinner", { x: -1060 - 2600 }, { x: -1060 + 2600, duration: 0.6, ease: "none", immediateRender: false }, S[b] - 0.3);
+        tl.set("#wipeinner", { x: -4000 }, S[b] + 0.31);
+      }
+      // scene overlay visibility (explicit, independent of clip lifecycle)
+      for (var v = 1; v <= 13; v++) {
+        tl.set("#sc" + v, { opacity: 1 }, S[v]);
+        if (v < 13) tl.set("#sc" + v, { opacity: 0 }, S[v + 1]);
+      }
+
+      // ---------- S1 Create project ----------
+      enter(1);
+      camSet(1, 0, 1005, 540, 0.4975);
+      tilt(1, 0.05, 18, -24);
+      cam(1, 0.8, 1100, 122, 1.25, 1.0);
+      spot(1, 1.0, 985, 95, 240, 55);
+      rip("#r1", 1, 1.3);
+      spotOff(1, 2.5);
+      cam(1, 2.7, 1005, 540, 0.4975, 0.9);
+
+      // ---------- S2 Omni Reference ----------
+      enter(2);
+      camSet(2, 0, 1005, 540, 0.4975);
+      cam(2, 0.3, 200, 190, 2.2, 1.0);
+      spot(2, 0.95, 18, 162, 110, 28); rip("#r2a", 2, 1.0);
+      spot(2, 1.65, 18, 230, 110, 26); rip("#r2b", 2, 1.7);
+      cam(2, 3.4, 300, 150, 2.4, 0.9);
+      spot(2, 4.0, 260, 96, 108, 28); rip("#r2c", 2, 4.3);
+      spotOff(2, 7.0);
+      var CT = [1.8, 2.7, 3.7, 5.3];
+      for (var c = 0; c < 4; c++) {
+        tl.from("#s2-c" + c, { y: 30, opacity: 0, duration: 0.35, ease: "back.out(2)" }, at(2, 0.45 + c * 0.1));
+        tl.to("#s2-c" + c, { backgroundColor: "#00cae0", color: "#000000", borderColor: "#00cae0", duration: 0.25, ease: "power2.out" }, at(2, CT[c]));
+      }
+
+      // ---------- S3 Assets ----------
+      enter(3);
+      camSet(3, 0, 1005, 540, 0.4975);
+      tilt(3, 0.0, -14, 20);
+      cam(3, 0.5, 760, 470, 0.92, 1.0);
+      var ROT = [-10, 6, -4, 9, -7];
+      for (var a = 0; a < 5; a++) {
+        tl.from("#s3-a" + a, { x: 500 - (40 + a * 203 + 94), y: 520, z: -900, rotationY: 70 * (a % 2 ? 1 : -1), rotationX: 30,
+          opacity: 0, scale: 0.4, duration: 0.9, ease: "expo.out" }, at(3, 1.3 + a * 0.28));
+        tl.to("#s3-a" + a, { rotation: ROT[a], y: -14, duration: 1.4, ease: "sine.inOut" }, at(3, 2.2 + a * 0.28));
+      }
+      cam(3, 4.2, 390, 185, 2.2, 0.9);
+      tl.to("#s3-assets", { y: -70, scale: 0.86, duration: 0.8, ease: "power3.inOut" }, at(3, 4.2));
+      spot(3, 4.9, 152, 148, 466, 66);
+      tl.from("#s3-lim div", { y: 60, opacity: 0, rotationX: -60, duration: 0.6, ease: "back.out(1.7)", stagger: 0.14 }, at(3, 4.8));
+      spotOff(3, 7.4);
+
+      // ---------- S4 Prompt ----------
+      enter(4);
+      camSet(4, 0, 385, 420, 1.2);
+      cam(4, 0.25, 385, 225, 2.35, 1.0);
+      cam(4, 1.4, 385, 255, 2.5, 4.6, "sine.inOut");
+      spot(4, 1.1, 150, 140, 476, 165);
+      tl.from("#s4-prompt", { y: 120, opacity: 0, rotationX: -35, duration: 0.7, ease: "power4.out" }, at(4, 0.9));
+      tl.to("#s4-t0", { clipPath: "inset(0 0% 0 0)", duration: 1.1, ease: "steps(40)" }, at(4, 1.4));
+      tl.to("#s4-t1", { clipPath: "inset(0 0% 0 0)", duration: 1.0, ease: "steps(38)" }, at(4, 2.5));
+      tl.to("#s4-t2", { clipPath: "inset(0 0% 0 0)", duration: 1.0, ease: "steps(40)" }, at(4, 3.5));
+      tl.from("#s4-g0", { scale: 0, opacity: 0, duration: 0.35, ease: "back.out(2.4)" }, at(4, 2.4));
+      tl.from("#s4-g1", { scale: 0, opacity: 0, duration: 0.35, ease: "back.out(2.4)" }, at(4, 3.2));
+      tl.from("#s4-g2", { scale: 0, opacity: 0, duration: 0.35, ease: "back.out(2.4)" }, at(4, 4.1));
+      spotOff(4, 6.3);
+
+      // ---------- S5 Settings ----------
+      enter(5);
+      camSet(5, 0, 385, 380, 1.0);
+      cam(5, 0.25, 385, 385, 2.1, 0.9);
+      spot(5, 0.8, 148, 348, 476, 66);
+      tl.from("#s5-model", { scale: 0.3, opacity: 0, rotationY: -90, duration: 0.6, ease: "back.out(1.8)" }, at(5, 0.7));
+      cam(5, 3.0, 385, 505, 2.4, 0.8); spot(5, 3.2, 155, 462, 465, 74);
+      cam(5, 4.5, 385, 597, 2.4, 0.7); spot(5, 4.7, 158, 582, 455, 34);
+      cam(5, 5.9, 385, 676, 2.4, 0.7); spot(5, 6.1, 158, 652, 455, 58);
+      spotOff(5, 8.9);
+      var KT = [3.5, 4.9, 6.3];
+      for (var k2 = 0; k2 < 3; k2++) {
+        tl.from("#s5-k" + k2, { rotationY: -100, opacity: 0, z: -200, duration: 0.7, ease: "back.out(1.5)", transformOrigin: "0% 50%" }, at(5, KT[k2]));
+      }
+
+      // ---------- S6 Generate ----------
+      enter(6);
+      camSet(6, 0, 580, 560, 1.4);
+      cam(6, 0.1, 578, 682, 2.3, 0.6, "power2.out");
+      spot(6, 0.25, 532, 670, 93, 26); rip("#r6a", 6, 0.45);
+      tl.from("#s6-cred", { x: 120, opacity: 0, duration: 0.5, ease: "power3.out" }, at(6, 0.5));
+      var cr = { v: 630 };
+      tl.to(cr, { v: 1890, duration: 0.9, ease: "power2.out", onUpdate: function () {
+        document.getElementById("s6-num").textContent = Math.round(cr.v); } }, at(6, 0.8));
+      tl.from("#s6-load", { x: -120, opacity: 0, duration: 0.5, ease: "expo.out" }, at(6, 1.0));
+      tl.fromTo("#s6-load circle", { rotation: 0 }, { rotation: 720, duration: 3.6, ease: "none", immediateRender: false }, at(6, 1.0));
+      spotOff(6, 1.9);
+      cam(6, 2.2, 1690, 150, 1.55, 1.0);
+      spot(6, 3.1, 1426, 140, 70, 70); rip("#r6b", 6, 3.6);
+      spotOff(6, 5.0);
+
+      // ---------- S7 Result ----------
+      enter(7);
+      camSet(7, 0, 1025, 355, 1.37);
+      cam(7, 0.35, 1025, 355, 1.825, 1.2, "expo.inOut");
+      cam(7, 1.6, 1035, 345, 1.95, 4.0, "sine.inOut");
+      tl.fromTo("#card", { scale: 1 }, { scale: 1.035, duration: 0.6, ease: "back.out(2)", yoyo: true, repeat: 1, immediateRender: false }, at(7, 0.5));
+      tl.from("#s7-chips span", { y: 50, opacity: 0, duration: 0.45, ease: "power3.out", stagger: 0.12 }, at(7, 1.4));
+
+      // ---------- S8 Refine ----------
+      enter(8);
+      camSet(8, 0, 1035, 830, 1.0);
+      cam(8, 0.2, 1035, 912, 1.7, 0.9);
+      spot(8, 0.6, 998, 880, 73, 77); rip("#r8", 8, 0.8);
+      cam(8, 3.1, 265, 205, 2.4, 1.0);
+      spot(8, 3.6, 150, 150, 480, 95);
+      tl.from("#s8-rev", { y: 120, opacity: 0, rotationX: -35, duration: 0.7, ease: "power4.out" }, at(8, 4.0));
+      tl.to("#s8-t0", { clipPath: "inset(0 0% 0 0)", duration: 1.6, ease: "steps(29)" }, at(8, 4.6));
+      tl.from("#s8-rev .tags span", { scale: 0, opacity: 0, duration: 0.35, ease: "back.out(2.4)", stagger: 0.18 }, at(8, 6.5));
+      spotOff(8, 9.2);
+
+      // ---------- S9 Before / After ----------
+      enter(9);
+      camSet(9, 0, 1025, 355, 1.825);
+      cam(9, 0.1, 1025, 355, 1.93, D[9] - 0.3, "sine.inOut");
+      tl.set("#before", { opacity: 1 }, at(9, 0));
+      tl.set("#before", { opacity: 0 }, S[10]);
+      tl.from("#s9-b", { x: -80, opacity: 0, duration: 0.45, ease: "power3.out" }, at(9, 0.4));
+      tl.fromTo("#afterwrap", { clipPath: "inset(0 0 0 100%)" }, { clipPath: "inset(0 0 0 0%)", duration: 0.8, ease: "power3.inOut", immediateRender: false }, at(9, 2.9));
+      tl.fromTo("#divider", { left: 1307, opacity: 1 }, { left: 743, duration: 0.8, ease: "power3.inOut", immediateRender: false }, at(9, 2.9));
+      tl.to("#divider", { opacity: 0, duration: 0.2 }, at(9, 3.7));
+      tl.from("#s9-a", { x: 80, opacity: 0, duration: 0.45, ease: "back.out(2)" }, at(9, 3.3));
+      tl.set("#afterwrap", { clipPath: "inset(0 0 0 100%)" }, S[10]);
+
+      // ---------- S10 Black Friday stickers ----------
+      enter(10);
+      tilt(10, 0.0, 12, 18);
+      camSet(10, 0, 345, 390, 1.45);
+      cam(10, 0.1, 345, 420, 1.6, 1.4, "sine.inOut");
+      camSet(10, 1.5, 1030, 335, 1.4); flash(10, 1.5);
+      cam(10, 1.55, 1030, 335, 1.55, 1.9, "sine.inOut");
+      camSet(10, 3.5, 760, 400, 0.8); flash(10, 3.5);
+      camSet(10, 5.5, 1030, 335, 1.3); flash(10, 5.5);
+      cam(10, 5.55, 1030, 335, 1.5, 1.8, "sine.inOut");
+      tl.from("#s10-new", { scale: 0, rotation: -12, duration: 0.5, ease: "back.out(2.5)" }, at(10, 0.5));
+      for (var q = 0; q < 3; q++) {
+        tl.from("#s10-k" + q, { y: 80, rotationX: -80, opacity: 0, duration: 0.6, ease: "back.out(1.6)" }, at(10, 1.7 + q * 0.6));
+      }
+
+      // ---------- S11 Black Friday deal ----------
+      enter(11);
+      camSet(11, 0, 1005, 540, 0.4975);
+      tilt(11, 0.0, -16, -18);
+      tl.fromTo("#chrome", { opacity: 0 }, { opacity: 1, duration: 0.3, immediateRender: false }, at(11, 0.1));
+      tl.set("#chrome", { opacity: 0 }, S[12]);
+      cam(11, 0.6, 577, 360, 1.55, 1.1);
+      cam(11, 3.3, 1005, 905, 0.62, 1.1);
+      tl.from("#s11-price", { y: 200, opacity: 0, rotationX: -50, duration: 0.8, ease: "expo.out" }, at(11, 4.9));
+      tl.from("#s11-amt", { scale: 1.6, opacity: 0, duration: 0.6, ease: "back.out(1.8)" }, at(11, 5.1));
+      tl.from("#s11-or", { y: 30, opacity: 0, duration: 0.4, ease: "power2.out" }, at(11, 5.5));
+      tl.from("#s11-fine", { opacity: 0, duration: 0.4, ease: "power1.out" }, at(11, 5.8));
+
+      // ---------- S12 CTA ----------
+      tl.set("#hud", { opacity: 0 }, S[12]);
+      tl.set("#stage", { opacity: 0 }, S[12]);
+      tl.from("#s12-l1", { yPercent: 110, duration: 0.6, ease: "expo.out" }, at(12, 0.1));
+      tl.from("#s12-l2", { yPercent: 110, scale: 0.8, duration: 0.7, ease: "back.out(1.7)" }, at(12, 0.25));
+      tl.from("#s12-bub", { y: 160, rotationX: -60, opacity: 0, duration: 0.7, ease: "power4.out" }, at(12, 0.35));
+      tl.to("#s12-type", { clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "steps(6)" }, at(12, 0.9));
+      tl.fromTo("#s12-caret", { opacity: 1 }, { opacity: 0, duration: 0.25, ease: "steps(1)", yoyo: true, repeat: 9, immediateRender: false }, at(12, 0.3));
+      tl.from("#s12-sub", { y: 40, opacity: 0, duration: 0.5, ease: "power3.out" }, at(12, 1.1));
+      tl.to("#s12-send", { scale: 0.85, duration: 0.12, yoyo: true, repeat: 1, ease: "power2.inOut" }, at(12, 2.15));
+      tl.fromTo("#s12-plane", { opacity: 1, x: 0, y: 0, rotation: 0, scale: 0.7 },
+        { opacity: 1, x: 260, y: -900, rotation: -30, scale: 1.6, duration: 1.0, ease: "power2.in", immediateRender: false }, at(12, 2.3));
+
+      // ---------- S13 Logo outro ----------
+      tl.from("#s13-burst", { scale: 0.2, opacity: 0, duration: 1.0, ease: "expo.out" }, at(13, 0.0));
+      tl.from("#s13-glyph", { rotationY: -100, scale: 0.3, opacity: 0, duration: 0.9, ease: "back.out(1.4)" }, at(13, 0.1));
+      tl.fromTo("#s13-glow", { opacity: 0, scale: 0.6 }, { opacity: 0.9, scale: 1.25, duration: 0.5, ease: "power2.out", immediateRender: false }, at(13, 0.6));
+      tl.to("#s13-glow", { opacity: 0, scale: 1.5, duration: 0.6, ease: "power2.in" }, at(13, 1.1));
+      tl.fromTo("#s13-word", { clipPath: "inset(0 100% 0 0)", x: -40 }, { clipPath: "inset(0 0% 0 0)", x: 0, duration: 0.7, ease: "power4.out", immediateRender: false }, at(13, 0.55));
+      tl.from("#s13-badge", { scale: 0, rotation: 15, duration: 0.6, ease: "back.out(2.6)" }, at(13, 1.0));
+      tl.fromTo("#s13-shine", { x: 0 }, { x: 300, duration: 0.7, ease: "power2.inOut", immediateRender: false }, at(13, 1.5));
+      tl.from("#s13-tag", { y: 50, opacity: 0, letterSpacing: 20, duration: 0.7, ease: "power3.out" }, at(13, 1.25));
+      tl.fromTo("#s13-logo", { rotationY: 0, y: 0 }, { rotationY: 6, y: -10, duration: 1.6, ease: "sine.inOut", immediateRender: false }, at(13, 1.9));
+      tl.to("#s13-logo, #s13-burst", { opacity: 0, duration: 0.35, ease: "power1.in" }, TOTAL - 0.4);
+
       window.__timelines["main"] = tl;
     </script>
   </body>
