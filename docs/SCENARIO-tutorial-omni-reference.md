@@ -1,11 +1,13 @@
 # Skenario Motion Graphic Tutorial — "Make a 30-Second Perfume Ad with CapCut Omni Reference"
 
-**Format:** 4:3 · 1440×1080 · 30fps · target durasi ±60–65 detik (final ngikut panjang MP3 VO)
+**Format:** 4:3 · 1440×1080 · 30fps · target durasi ±75–80 detik (final ngikut panjang MP3 VO)
 **Bahasa:** VO & semua teks di layar **English**
 **Footage utama:** `assets/footage/tutorial-source.mp4` (screen record CapCut 2010×1080, 36.7s, **tanpa audio**)
 **Gaya:** dark UI tutorial — screen recording ditaruh di "window frame" rounded, lalu di-*zoom & pan* ke area yang lagi dibahas. Overlay: spotlight (area lain di-dim), cursor ring + click ripple, label callout, kinetic typography, step counter.
 
-> **Revisi v3:** Hook & roadmap dihapus — video langsung buka di CapCut (scene Create Project). Scene tips timestamp dihapus. VO `vo01`–`vo11`, semua English.
+> **Revisi v4:** Mulai langsung dari Create Project, tanpa tips timestamp. CTA "save & follow" dihapus → diganti segmen **Black Friday stickers** + **Black Friday deal**, ending CTA "Comment 'CapCut'". Palet & logo pakai brand CapCut. VO `vo01`–`vo13`, semua English.
+>
+> **Footage tambahan:** `assets/footage/black-friday-stickers.mp4` (53.7s, panel Stickers → Black Friday → drag "SHOP NOW" ke klip) · `assets/footage/black-friday-deal-page.mp4` (6.5s, halaman promo "Get started for just $3.99 or less | CapCut PC Only").
 
 ---
 
@@ -46,12 +48,15 @@
 | S8 | **Fix a section** | Highlight potongan klip di timeline (kotak putih), panah ke kotak referensi. Typewriter prompt revisi + chip setting. | Prompt: "add more petal flowers around" · Chips: "5s · 4:3" | 0:25–0:28 | vo08 |
 | S9 | **Before / After** | Split-screen wipe vertikal: kiri sebelum (sumber 0:27), kanan sesudah (sumber 0:35). | "BEFORE" / "AFTER" | 0:27 & 0:33–0:36 | vo09 |
 | S10 | **Recap** | 4 chip step slide-in stagger, masing-masing dapet centang ✓. | "✓ Assets · ✓ Omni Reference · ✓ Settings · ✓ Generate" | grafis | vo10 |
-| S11 | **CTA** | End card: hasil akhir blur di background + teks CTA + kartu follow (adaptasi block `instagram-follow` ke 4:3). | "Save this for later" · "Follow for more AI video tricks" | 0:35–0:36 + grafis | vo11 |
+| S11 | **Black Friday stickers** | Badge "NEW" + judul pop-in dengan Laser Gradient. Zoom ke panel **Stickers → kategori Black Friday**, grid stiker muncul stagger. Lalu cut ke momen drag stiker **"SHOP NOW"** ke preview botol parfum (speed-ramp, bagian resize/posisi dipercepat 3–4×). Akhir scene: preview di-pop out full 4:3 dengan stiker nempel. | "NEW · Black Friday Stickers, Effects & Text Templates" · "Drag. Drop. Ready for the sale." | BF-stickers 0:06–0:12, 0:26–0:34, 0:43–0:52 | vo11 |
+| S12 | **Black Friday deal** | Halaman promo CapCut di browser frame. Zoom ke headline, lalu harga **"$3.99 or less"** di-highlight Laser Gradient + underline animasi. Disclaimer kecil di bawah. | "CapCut PC Black Friday Sale" · "Get started for just **$3.99** or less" · Fine print: "CapCut PC only. Eligible new, expiring & lapsed users. Prices vary by region." | BF-deal-page 0:00–0:06 | vo12 |
+| S13 | **CTA (ending)** | Background CapCut Black, logo **CapCut PC for Marketing** fade-in di atas. Bubble komentar ala sosmed pop-in, teks "CapCut" diketik di dalamnya + kursor kedip; ikon kirim/pesawat kertas terbang keluar. Hold 1.5s di akhir. | "Comment **'CapCut'**" · "and I'll send you the link" | grafis + logo | vo13 |
 
 **Detail motion global**
 - Easing zoom/pan: `power3.inOut`, durasi 0.8–1.2s; zoom max 2.2× biar teks UI nggak pecah (sumber cuma 1080p).
 - Transisi antar scene: zoom-through (scale up + blur 8px) atau whip pan kecil, max 0.4s.
-- Palet: background `#0E0F12`, aksen cyan `#22D3EE` (match tombol CapCut), kuning `#FACC15` untuk tips, putih untuk teks.
+- Palet brand CapCut (`assets/brand/capcut-palette.png`): **CapCut Bright Blue `#00CAE0`** (aksen utama, highlight, step counter), **CapCut Black `#000000`** (background), **CapCut White `#FFFFFF`** (teks), **Bright Blue Gradient** (putih→cyan→biru, buat glow/spotlight), **Laser Gradient** (lilac `#D8B4F8` → cyan `#00E5FF`, buat badge NEW, harga, chip CTA — sama kayak badge "PC" di logo). Kuning cuma buat tip CapCut asli di footage.
+- Logo: `assets/brand/capcut-pc-marketing-logo.png` (putih, transparan) — dipakai di end card S13.
 - Font: Inter / DM Sans bold untuk judul, medium untuk label.
 - Musik (opsional): lo-fi / corporate upbeat ±100–110 BPM, di-duck −12dB pas VO bunyi.
 
@@ -73,9 +78,11 @@ Simpan di **`assets/vo/`** dengan nama persis seperti di bawah. Gaya: casual, fr
 | `vo08.mp3` | S8 | "Not happy with one part? Easy. Grab that clip, use it as a reference, and add a short prompt — like 'add more petal flowers around.'" | 8s |
 | `vo09.mp3` | S9 | "Generate just five seconds, and the difference is huge. Before… and after." | 5s |
 | `vo10.mp3` | S10 | "So that's it: assets, Omni Reference, settings, generate. A thirty-second ad, done." | 6s |
-| `vo11.mp3` | S11 | "If this helped, save it and follow for more AI video tricks!" | 4s |
+| `vo11.mp3` | S11 | "And for Black Friday, CapCut just added new stickers, effects, and text templates. Just drag one onto your clip — like this 'Shop Now' sticker — and your ad is sale-ready." | 9s |
+| `vo12.mp3` | S12 | "Plus, CapCut PC is on Black Friday sale right now — get started for just three ninety-nine or less." | 6s |
+| `vo13.mp3` | S13 | "Comment 'CapCut', and I'll send you the link." | 3s |
 
-**Total VO ±64 detik.**
+**Total VO ±74 detik.**
 
 ---
 
@@ -85,4 +92,3 @@ Simpan di **`assets/vo/`** dengan nama persis seperti di bawah. Gaya: casual, fr
 |---|---|
 | `assets/footage/result-final.mp4` | Export asli iklan LUMÉA (30s) + versi revisi kelopak (5s) dari CapCut. Area preview di screen record cuma ±730px, jadi buat S7 & S9 bakal jauh lebih tajam kalau pakai export aslinya. |
 | `assets/music/bgm.mp3` | Musik latar. |
-| Handle / nama akun | Buat kartu follow di end card (default gue isi placeholder). |
