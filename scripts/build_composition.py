@@ -28,7 +28,7 @@ vo_start = {n: round(starts[n] + (0.3 if n == 1 else 0.15), 2) for n in range(1,
 STEP = {1: ("01", "SETUP"), 2: ("01", "SETUP"), 3: ("02", "ASSETS"), 4: ("03", "PROMPT"),
         5: ("04", "SETTINGS"), 6: ("05", "GENERATE"), 7: ("05", "RESULT"), 8: ("06", "REFINE"),
         9: ("06", "REFINE"), 10: ("OK", "RECAP"), 11: ("BF", "BLACK FRIDAY"), 12: ("BF", "BLACK FRIDAY")}
-HEAD = {1: ("OPEN", "CAPCUT"), 2: ("OMNI", "REFERENCE"), 3: ("DROP IN", "YOUR ASSETS"),
+HEAD = {1: ("OPEN", "CapCut"), 2: ("OMNI", "REFERENCE"), 3: ("DROP IN", "YOUR ASSETS"),
         4: ("WRITE", "THE PROMPT"), 5: ("DIAL IN", "SETTINGS"), 6: ("HIT", "GENERATE"),
         7: ("ONE PROMPT.", "ONE AD."), 8: ("FIX ANY", "SECTION"), 9: ("BEFORE", "AFTER"),
         10: ("THAT'S", "IT."), 11: ("BLACK FRIDAY", "STICKERS"), 12: ("BLACK FRIDAY", "SALE")}
@@ -93,7 +93,7 @@ EXTRA = {
 def scene13():
     return (f'<div id="sc13" class="clip scene" data-start="{starts[13]}" data-duration="{cd[13]}" data-track-index="2">'
             '<div class="cta-head"><div class="hl"><span class="w" id="s13-l1">COMMENT</span></div>'
-            '<div class="hl"><span class="w laser" id="s13-l2">&lsquo;CAPCUT&rsquo;</span></div></div>'
+            '<div class="hl"><span class="w laser" id="s13-l2">&lsquo;CapCut&rsquo;</span></div></div>'
             '<div class="bubble" id="s13-bub"><div class="av"></div><div class="btxt"><small>Add a comment&hellip;</small>'
             '<div class="typed"><span class="tw" id="s13-type">CapCut</span><i class="caret" id="s13-caret"></i></div></div>'
             '<div class="send" id="s13-send"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></div></div>'
