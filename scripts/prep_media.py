@@ -12,6 +12,8 @@ DEAL = "assets/footage/black-friday-deal-page.mp4"
 W, H = 2010, 1080
 
 def vo_dur(i):
+    if not os.path.exists(f"assets/vo/vo{i:02d}.mp3"):
+        return None
     out = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
                                    "-of", "csv=p=0", f"assets/vo/vo{i:02d}.mp3"])
     return float(out)
@@ -24,15 +26,20 @@ SCENES = {
     4: [(T, 8.9, 12.7, 0.7)],
     5: [(T, 12.7, 16.8, 0.55)],
     6: [(T, 16.8, 22.8, 1.4)],
-    7: [(T, 22.8, 25.0, 0.5)],
+    7: [(T, 32.3, 35.2, 0.6)],   # result playing in the preview (moving)
     8: [(T, 25.0, 29.0, 0.55)],
     9: [(T, 33.6, 36.6, 0.62)],
-    10: [(BF, 6.4, 9.4, 2.0), (BF, 26.4, 29.4, 1.5), (BF, 32.4, 35.6, 1.6), (BF, 46.2, 48.0, 1.0)],
-    11: [(DEAL, 0.0, 6.4, 0.8)],
+    10: [(T, 6.0, 7.2, 1.0), (T, 3.9, 5.1, 1.0), (T, 13.4, 15.2, 1.5), (T, 16.9, 18.7, 1.5), (T, 34.0, 36.6, 0.9)],  # recap montage
+    11: [(BF, 6.4, 9.4, 2.0), (BF, 26.4, 29.4, 1.5), (BF, 32.4, 35.6, 1.6), (BF, 46.2, 48.0, 1.0)],
+    12: [(DEAL, 0.0, 6.4, 0.8)],
 }
+# scene -> VO file number (vo13 = Black Friday deal line, may not exist yet)
+VO_FOR = {n: n for n in range(1, 12)}
+VO_FOR[12] = 13
 
 def scene_len(n):
-    return round(vo_dur(n) + 0.6 + (0.15 if n == 1 else 0), 2)
+    d = vo_dur(VO_FOR[n]) or 6.4  # placeholder until vo13 is supplied
+    return round(d + 0.6 + (0.15 if n == 1 else 0), 2)
 
 def fit_filter(src):
     if src == DEAL:  # white page: scale to width, pad to 2010x1080 with white
@@ -76,6 +83,6 @@ for name, box in {"glyph": (122, 145, 396, 365), "wordmark": (440, 122, 970, 264
                   "badge": (975, 130, 1158, 238), "tagline": (440, 272, 1162, 388)}.items():
     logo.crop(box).save(f"assets/img/logo-{name}.png")
 
-json.dump({"scenes": lens, "vo": {i: round(vo_dur(i), 3) for i in range(1, 13)}},
+json.dump({"scenes": lens, "vo": {i: round(vo_dur(i), 3) for i in range(1, 14) if vo_dur(i)}},
           open("assets/cut/timing.json", "w"), indent=1)
 print("done")

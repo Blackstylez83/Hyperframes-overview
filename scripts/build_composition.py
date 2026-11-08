@@ -9,24 +9,29 @@ os.chdir(ROOT)
 timing = json.load(open("assets/cut/timing.json"))
 vo = {int(k): v for k, v in timing["vo"].items()}
 dur = {int(k): v for k, v in timing["scenes"].items()}
-dur[12] = round(vo[12] + 0.6, 2)
-dur[13] = 3.6
+# scenes: 1-9 tutorial, 10 recap, 11 BF stickers, 12 BF deal, 13 CTA, 14 logo
+VO_FOR = {n: n for n in range(1, 12)}
+VO_FOR[12] = 13   # Black Friday deal line (optional until supplied)
+VO_FOR[13] = 12   # "Comment 'CapCut'..."
+dur[13] = round(vo[12] + 0.6, 2)
+dur[14] = 3.6
+LAST = 14
 
 starts, t = {}, 0.0
-for n in range(1, 14):
+for n in range(1, LAST + 1):
     starts[n] = round(t, 2)
     t += dur[n]
 TOTAL = round(t, 2)
-cd = {n: round((starts[n + 1] if n < 13 else TOTAL) - starts[n] - 0.01, 3) for n in range(1, 14)}
-vo_start = {n: round(starts[n] + (0.3 if n == 1 else 0.15), 2) for n in range(1, 13)}
+cd = {n: round((starts[n + 1] if n < LAST else TOTAL) - starts[n] - 0.01, 3) for n in range(1, LAST + 1)}
+vo_start = {n: round(starts[n] + (0.3 if n == 1 else 0.15), 2) for n in range(1, 14)}
 
 STEP = {1: ("01", "SETUP"), 2: ("01", "SETUP"), 3: ("02", "ASSETS"), 4: ("03", "PROMPT"),
         5: ("04", "SETTINGS"), 6: ("05", "GENERATE"), 7: ("05", "RESULT"), 8: ("06", "REFINE"),
-        9: ("06", "REFINE"), 10: ("BF", "BLACK FRIDAY"), 11: ("BF", "BLACK FRIDAY")}
+        9: ("06", "REFINE"), 10: ("OK", "RECAP"), 11: ("BF", "BLACK FRIDAY"), 12: ("BF", "BLACK FRIDAY")}
 HEAD = {1: ("OPEN", "CAPCUT"), 2: ("OMNI", "REFERENCE"), 3: ("DROP IN", "YOUR ASSETS"),
         4: ("WRITE", "THE PROMPT"), 5: ("DIAL IN", "SETTINGS"), 6: ("HIT", "GENERATE"),
         7: ("ONE PROMPT.", "ONE AD."), 8: ("FIX ANY", "SECTION"), 9: ("BEFORE", "AFTER"),
-        10: ("BLACK FRIDAY", "STICKERS"), 11: ("BLACK FRIDAY", "SALE")}
+        10: ("THAT'S", "IT."), 11: ("BLACK FRIDAY", "STICKERS"), 12: ("BLACK FRIDAY", "SALE")}
 # bottom key phrases: (scene-local time, html)
 PHRASES = {
     1: [(0.7, 'Click <b>Create Project</b>')],
@@ -38,17 +43,18 @@ PHRASES = {
     7: [(0.7, 'One prompt. A <b>30-second</b> ad.')],
     8: [(0.6, 'Use the clip as a <b>reference</b>'), (4.0, 'Add a <b>short prompt</b>')],
     9: [(0.5, 'A <b>5-second</b> fix')],
-    10: [(0.8, 'Stickers &middot; Effects &middot; <b>Text Templates</b>'), (4.3, 'Drag. Drop. <b>Sale-ready.</b>')],
-    11: [(0.6, 'CapCut PC <b>Black Friday Sale</b>'), (5.0, 'Get started for <b>$3.99</b> or less')],
+    10: [(4.8, 'A <b>30-second</b> ad. Done.')],
+    11: [(0.8, 'Stickers &middot; Effects &middot; <b>Text Templates</b>'), (4.3, 'Drag. Drop. <b>Sale-ready.</b>')],
+    12: [(0.6, 'CapCut PC <b>Black Friday Sale</b>'), (4.6, 'Get started for <b>$3.99</b> or less')],
 }
-VIDEO_N = list(range(1, 12))
+VIDEO_N = list(range(1, 13))
 
 
 def scene_overlay(n):
     num, label = STEP[n]
     l1, l2 = HEAD[n]
     pill = (f'<div class="pill" id="s{n}-pill"><span class="dot"></span>'
-            f'{"STEP " + num if num != "BF" else "BONUS"} &middot; {label}</div>')
+            f'{"STEP " + num if num not in ("BF", "OK") else ("BONUS" if num == "BF" else "DONE")} &middot; {label}</div>')
     head = (f'<div class="head" id="s{n}-head"><div class="hl"><span class="w" id="s{n}-l1">{l1}</span></div>'
             f'<div class="hl"><span class="w c" id="s{n}-l2">{l2}</span></div></div>')
     phr = "".join(f'<div class="phrase" id="s{n}-p{k}">{h}</div>' for k, (_, h) in enumerate(PHRASES.get(n, [])))
@@ -65,11 +71,6 @@ EXTRA = {
         for i, (k, lab) in enumerate([("product", "PRODUCT"), ("model", "MODEL"), ("outfit", "OUTFIT"), ("scene", "SCENE")]))
        + '<div class="acard audio" id="s3-a4"><div class="wave">' + "".join(f'<i style="height:{h}px"></i>' for h in [30, 62, 44, 88, 56, 96, 40, 70, 34, 58]) + '</div><span>AUDIO</span></div></div>'
        + '<div class="limits" id="s3-lim"><div><b>30</b>images</div><div><b>10</b>videos</div><div><b>10</b>audio</div></div>',
-    4: '<div class="glass prompt" id="s4-prompt"><div class="glab">PROMPT</div>'
-       '<div class="tw" id="s4-t0">Ultra-photorealistic perfume commercial,</div>'
-       '<div class="tw" id="s4-t1">rose field at golden hour, soft haze,</div>'
-       '<div class="tw" id="s4-t2">glass refraction, shallow depth of field.</div>'
-       '<div class="tags"><span id="s4-g0">PRODUCT</span><span id="s4-g1">MOOD</span><span id="s4-g2">STYLE</span></div></div>',
     5: '<div class="model" id="s5-model">SEEDANCE 2.5</div><div class="specs">'
        + "".join(f'<div class="spec" id="s5-k{i}"><small>{a}</small><b>{b}</b></div>'
                  for i, (a, b) in enumerate([("DURATION", "30s"), ("RESOLUTION", "720p"), ("RATIO", "4:3")])) + '</div>',
@@ -80,37 +81,39 @@ EXTRA = {
        '<div class="tw big" id="s8-t0">add more petal flowers around</div>'
        '<div class="tags"><span id="s8-g0">5s</span><span id="s8-g1">4:3</span><span id="s8-g2">REFERENCE: CLIP</span></div></div>',
     9: '<div class="ba-tag before" id="s9-b">BEFORE</div><div class="ba-tag after" id="s9-a">AFTER</div>',
-    10: '<div class="newb" id="s10-new">NEW</div><div class="specs bf">'
-        + "".join(f'<div class="spec" id="s10-k{i}"><b>{t}</b></div>' for i, t in enumerate(["Stickers", "Effects", "Text Templates"])) + '</div>',
-    11: '<div class="price" id="s11-price"><div class="amt" id="s11-amt">$3.99</div><div class="or" id="s11-or">or less &middot; CapCut PC</div>'
-        '<div class="fine" id="s11-fine">CapCut PC only. Eligible new, expiring &amp; lapsed users. Prices vary by region.</div></div>',
+    10: '<div class="checks">' + "".join(
+        f'<div class="chk" id="s10-k{i}"><i>&#10003;</i>{t}</div>' for i, t in enumerate(["Assets", "Omni Ref", "Settings", "Generate"])) + '</div>',
+    11: '<div class="newb" id="s11-new">NEW</div><div class="specs bf">'
+        + "".join(f'<div class="spec" id="s11-k{i}"><b>{t}</b></div>' for i, t in enumerate(["Stickers", "Effects", "Text Templates"])) + '</div>',
+    12: '<div class="price" id="s12-price"><div class="amt" id="s12-amt">$3.99</div><div class="or" id="s12-or">or less &middot; CapCut PC</div>'
+        '<div class="fine" id="s12-fine">CapCut PC only. Eligible new, expiring &amp; lapsed users. Prices vary by region.</div></div>',
 }
 
 
-def scene12():
-    return (f'<div id="sc12" class="clip scene" data-start="{starts[12]}" data-duration="{cd[12]}" data-track-index="2">'
-            '<div class="cta-head"><div class="hl"><span class="w" id="s12-l1">COMMENT</span></div>'
-            '<div class="hl"><span class="w laser" id="s12-l2">&lsquo;CAPCUT&rsquo;</span></div></div>'
-            '<div class="bubble" id="s12-bub"><div class="av"></div><div class="btxt"><small>Add a comment&hellip;</small>'
-            '<div class="typed"><span class="tw" id="s12-type">CapCut</span><i class="caret" id="s12-caret"></i></div></div>'
-            '<div class="send" id="s12-send"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></div></div>'
-            '<div class="cta-sub" id="s12-sub">and I&rsquo;ll send you the link</div>'
-            '<div class="plane" id="s12-plane"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></div></div>')
-
-
 def scene13():
+    return (f'<div id="sc13" class="clip scene" data-start="{starts[13]}" data-duration="{cd[13]}" data-track-index="2">'
+            '<div class="cta-head"><div class="hl"><span class="w" id="s13-l1">COMMENT</span></div>'
+            '<div class="hl"><span class="w laser" id="s13-l2">&lsquo;CAPCUT&rsquo;</span></div></div>'
+            '<div class="bubble" id="s13-bub"><div class="av"></div><div class="btxt"><small>Add a comment&hellip;</small>'
+            '<div class="typed"><span class="tw" id="s13-type">CapCut</span><i class="caret" id="s13-caret"></i></div></div>'
+            '<div class="send" id="s13-send"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></div></div>'
+            '<div class="cta-sub" id="s13-sub">and I&rsquo;ll send you the link</div>'
+            '<div class="plane" id="s13-plane"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></div></div>')
+
+
+def scene14():
     # slices placed with the original logo geometry, scaled 0.78 and centred
     k, ox, oy = 0.78, (1080 - (1162 - 122) * 0.78) / 2, 820
     def pos(x, y, w, h):
         return f"left:{ox + (x - 122) * k:.0f}px;top:{oy + (y - 122) * k:.0f}px;width:{w * k:.0f}px;height:{h * k:.0f}px"
-    return (f'<div id="sc13" class="clip scene" data-start="{starts[13]}" data-duration="{cd[13]}" data-track-index="2">'
-            '<div class="burst" id="s13-burst"></div>'
-            f'<div class="logo" id="s13-logo">'
-            f'<img class="lg" id="s13-glow" src="assets/img/logo-glyph-glow.png" style="{pos(122,145,274,220)}" alt="">'
-            f'<img class="lg" id="s13-glyph" src="assets/img/logo-glyph.png" style="{pos(122,145,274,220)}" alt="">'
-            f'<img class="lg" id="s13-word" src="assets/img/logo-wordmark.png" style="{pos(440,122,530,142)}" alt="">'
-            f'<div class="lg badge" id="s13-badge" style="{pos(975,130,183,108)}"><img src="assets/img/logo-badge.png" alt=""><i class="shine" id="s13-shine"></i></div>'
-            f'<img class="lg" id="s13-tag" src="assets/img/logo-tagline.png" style="{pos(440,272,722,116)}" alt="">'
+    return (f'<div id="sc14" class="clip scene" data-start="{starts[14]}" data-duration="{cd[14]}" data-track-index="2">'
+            '<div class="burst" id="s14-burst"></div>'
+            f'<div class="logo" id="s14-logo">'
+            f'<img class="lg" id="s14-glow" src="assets/img/logo-glyph-glow.png" style="{pos(122,145,274,220)}" alt="">'
+            f'<img class="lg" id="s14-glyph" src="assets/img/logo-glyph.png" style="{pos(122,145,274,220)}" alt="">'
+            f'<img class="lg" id="s14-word" src="assets/img/logo-wordmark.png" style="{pos(440,122,530,142)}" alt="">'
+            f'<div class="lg badge" id="s14-badge" style="{pos(975,130,183,108)}"><img src="assets/img/logo-badge.png" alt=""><i class="shine" id="s14-shine"></i></div>'
+            f'<img class="lg" id="s14-tag" src="assets/img/logo-tagline.png" style="{pos(440,272,722,116)}" alt="">'
             '</div></div>')
 
 
@@ -122,15 +125,15 @@ for n in VIDEO_N:
                   f'src="assets/cut/s{n:02d}.mp4" muted playsinline></video>')
 after = (f'<div id="afterwrap"><video id="v09" data-start="{starts[9]}" data-duration="{cd[9]}" data-track-index="1" '
          f'src="assets/cut/s09.mp4" muted playsinline></video></div>')
-audios = "".join(f'<audio id="a{n:02d}" data-start="{vo_start[n]}" data-duration="{vo[n]}" data-track-index="10" '
-                 f'src="assets/vo/vo{n:02d}.mp3" data-volume="1"></audio>' for n in range(1, 13))
-nums = "".join(f'<div class="bignum" id="num-{x}">{x}</div>' for x in ["01", "02", "03", "04", "05", "06", "BF"])
+audios = "".join(f'<audio id="a{VO_FOR[n]:02d}" data-start="{vo_start[n]}" data-duration="{vo[VO_FOR[n]]}" data-track-index="10" '
+                 f'src="assets/vo/vo{VO_FOR[n]:02d}.mp3" data-volume="1"></audio>' for n in range(1, 14) if VO_FOR[n] in vo)
+nums = "".join(f'<div class="bignum" id="num-{x}">{x}</div>' for x in ["01", "02", "03", "04", "05", "06", "OK", "BF"])
 
 html = Template(open("scripts/template.html").read()).substitute(
     TOTAL=TOTAL, NUMS=nums, VIDEOS="".join(videos), AFTER=after,
-    SCENES="".join(scene_overlay(n) for n in range(1, 12)) + scene12() + scene13(),
-    AUDIOS=audios, HUD_DUR=starts[12], STARTS=json.dumps([0] + [starts[n] for n in range(1, 14)]),
-    DURS=json.dumps([0] + [dur[n] for n in range(1, 14)]),
+    SCENES="".join(scene_overlay(n) for n in range(1, 13)) + scene13() + scene14(),
+    AUDIOS=audios, HUD_DUR=starts[13], STARTS=json.dumps([0] + [starts[n] for n in range(1, LAST + 1)]),
+    DURS=json.dumps([0] + [dur[n] for n in range(1, LAST + 1)]),
     PHRASES=json.dumps({n: [p[0] for p in v] for n, v in PHRASES.items()}),
 )
 open("index.html", "w").write(html)
